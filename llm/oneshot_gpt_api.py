@@ -8,7 +8,7 @@ GPT_API_KEY = os.getenv("GPT_API_KEY")
 messages = [
     {"role": "system", "content": "You need to get multiple single questions by performing decomposition to make it easier to search for multiple documents from complex questions. "
                                   "The conditions are as follows. Please make sure that all conditions are met."
-                                  "1. The Q I gave you means a complex query, and the result of decomposing Q is a single query (SQ). There can be multiple SQs (SQ1, SQ2, SQ3...)"
+                                  "e1. The Q I gave you means a complex query, and the result of decomposing Q is a single query (SQ). There can be multiple SQs (SQ1, SQ2, SQ3...)"
                                   "2. Decomposition should be as consistent as possible (the same complex question should be given)"
                                   "3. The decomposed SQ should be generated based on the common main entity in Q."
                                   "Examples of satisfying all conditions are as follows."
