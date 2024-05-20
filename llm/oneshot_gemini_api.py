@@ -17,7 +17,7 @@ system_prompt = "You need to get multiple single questions by performing decompo
                 "4. All SQs should closely relate to the original Q for effective document retrieval." \
                 "5. Avoid generating SQs that are too general or unrelated to the specific context of Q."
 
-user_prompt = "Q: What is the length of the track where the 2013 Liqui Moly Bathurst 12 Hour was staged?"
+user_prompt = "Q: Did the article from The Verge about Hasbro's Jenga: Super Mario Edition and the article from Engadget about the '9th generation iPad' both report a discount on their respective products during the Black Friday sales on Amazon?"
 
 print(user_prompt)
 
