@@ -72,7 +72,7 @@ print(docs[0])
 vectorstore = FAISS.from_documents(documents=docs, embedding=OpenAIEmbeddings(api_key=openai.api_key))
 
 retriever = vectorstore.as_retriever()
-prompt = hub.pull("rlm/rag-prompt")
+prompt = hub.pull("rlm/rag-prompt") + "Please let me know the basis of your answer when you give me the final answer. (ex: Based on article and paraphraph)"
 
 def format_docs(docs):
     return "\n\n".join(doc.page_content for doc in docs)
