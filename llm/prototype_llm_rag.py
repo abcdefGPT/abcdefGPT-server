@@ -8,13 +8,16 @@ import json
 import openai
 from langchain_community.document_loaders import DirectoryLoader, TextLoader
 from langchain_openai import ChatOpenAI
-from langchain_chroma import Chroma
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import RunnablePassthrough
 from langchain_openai import OpenAIEmbeddings
 from langchain import hub
+from dotenv import load_dotenv
 
-os.environ["OPENAI_API_KEY"]=""
+load_dotenv()
+GPT_API_KEY = os.getenv("GPT_API_KEY")
+
+os.environ["OPENAI_API_KEY"]=GPT_API_KEY
 
 llm = ChatOpenAI(temperature=0,               # 창의성 (0.0 ~ 2.0)
                  max_tokens=2048,             # 최대 토큰수
@@ -59,7 +62,7 @@ for key in SQ_keys:
     print(f"{key}: {data[key]}")
 
 #JSON 로드
-loader = DirectoryLoader('./public_institution_rule_english/', glob="*.json", show_progress=True, loader_cls=TextLoader)
+loader = DirectoryLoader('../rule/public_institution_rule_english/', glob="*.json", show_progress=True, loader_cls=TextLoader)
 
 docs = loader.load()
 
