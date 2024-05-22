@@ -2,6 +2,7 @@ import re
 
 from langchain_openai.chat_models import ChatOpenAI
 from langchain_core.prompts import PromptTemplate
+from langchain_community.vectorstores import FAISS
 import os
 import json
 import openai
@@ -65,7 +66,7 @@ docs = loader.load()
 print(f'document count : {len(docs)}')
 print(docs[0])
 
-vectorstore = Chroma.from_documents(documents=docs, embedding=OpenAIEmbeddings(api_key=openai.api_key))
+vectorstore = FAISS.from_documents(documents=docs, embedding=OpenAIEmbeddings(api_key=openai.api_key))
 
 retriever = vectorstore.as_retriever()
 prompt = hub.pull("rlm/rag-prompt")
