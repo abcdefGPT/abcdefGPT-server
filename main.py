@@ -2,7 +2,7 @@ from langchain_core.prompts import PromptTemplate
 from sqlalchemy.future import select
 from fastapi import FastAPI, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
-from entity import AsyncSessionLocal, Temp, create_tables
+from entity import AsyncSessionLocal, ChatGroup, Chat, create_tables
 from llm import prototype_rag  # llm.py 파일의 prototype_llm_rag 함수 임포트
 from langchain_community.vectorstores import FAISS
 from langchain_openai import OpenAIEmbeddings, ChatOpenAI
