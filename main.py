@@ -10,16 +10,12 @@ from langchain_community.document_loaders import DirectoryLoader, TextLoader
 import os
 import openai
 from dotenv import load_dotenv
-
 load_dotenv()
+
 GPT_API_KEY = os.getenv("GPT_API_KEY")
 os.environ["OPENAI_API_KEY"] = GPT_API_KEY
+
 app = FastAPI()
-llm = ChatOpenAI(
-    temperature=1.0,  # 창의성 (0.0 ~ 2.0)
-    max_tokens=2048,  # 최대 토큰수
-    model_name='gpt-4o',  # 모델명
-)
 
 # Decomposition Template
 template = (
@@ -36,40 +32,30 @@ template = (
         "5. SQs should have a high similarity to Q." +
         "6. Give me Q and SQs only JSON form, and don't use another annotation. I dont need answer about SQs")
 
+llm = ChatOpenAI(
+    temperature=1.0,  # 창의성 (0.0 ~ 2.0)
+    max_tokens=2048,  # 최대 토큰수
+    model_name='gpt-4o',  # 모델명
+)
+
 prompt1 = PromptTemplate(template=template, input_variables=['Query'])
 llm_chain = prompt1 | llm
 
-
-@app.on_event("startup")
-async def on_startup():
+@app.on_event("eventlistener")
+async def eventlistener():
     await create_tables()
     await create_vector_store()
 
 async def create_vector_store():
-
     loader = DirectoryLoader('rule/public_institution_rule_english', glob="*.json", show_progress=True,
                              loader_cls=TextLoader)
     docs = loader.load()
     vectorstore = FAISS.from_documents(documents=docs, embedding=OpenAIEmbeddings(api_key=openai.api_key))
     app.state.vectorstore = vectorstore
 
-
-
 async def get_db():
     async with AsyncSessionLocal() as db:
         yield db
-
-
-@app.get("/")
-async def read_root(query: str):
-    try:
-
-
-        answer = prototype_rag.run(query, app.state.vectorstore, llm, llm_chain)  # 벡터스토어를 함수로 전달
-        return {"answer": answer}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
 
 @app.get("/db-test")
 async def read_temp(db: AsyncSession = Depends(get_db)):
@@ -77,3 +63,22 @@ async def read_temp(db: AsyncSession = Depends(get_db)):
         result = await db.execute(select(Temp))
         temps = result.scalars().all()
         return temps
+
+@app.delete('/delete-chat-group')
+async def delete_chat_group():
+    return 0
+@app.get('/all-chat-group')
+async def all_chat_group():
+    return 0
+
+@app.get('/all-chat')
+async def all_chat():
+    return 0
+
+@app.post('/chat')
+async def chat(query: str):
+    try:
+        answer = prototype_rag.user_chat(query, app.state.vectorstore, llm, llm_chain)  # 벡터스토어를 함수로 전달
+        return {"answer": answer}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

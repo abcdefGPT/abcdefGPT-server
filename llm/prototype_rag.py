@@ -6,7 +6,7 @@ from langchain_core.runnables import RunnablePassthrough
 from langchain import hub
 import json
 
-def run(query, vectorstore, llm, llm_chain):
+def user_chat(query, vectorstore, llm, llm_chain):
 
     QUERY = "Q: " + query
     Answer = llm_chain.invoke(QUERY)
