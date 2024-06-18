@@ -10,6 +10,9 @@ from langchain_community.document_loaders import DirectoryLoader, TextLoader
 import os
 import openai
 from dotenv import load_dotenv
+
+from dto import ChatRequest
+
 load_dotenv()
 
 GPT_API_KEY = os.getenv("GPT_API_KEY")
@@ -69,11 +72,11 @@ async def all_chat():
     return 0
 
 @app.post('/chat')
-async def chat(query: str, group_id: int, db: AsyncSession = Depends(get_db)):
+async def chat(chatRequest: ChatRequest, db: AsyncSession = Depends(get_db)):
     try:
-        answer = prototype_rag.user_chat(query, app.state.vectorstore, llm, llm_chain)  # 벡터스토어를 함수로 전달
+        answer = prototype_rag.user_chat(chatRequest.query, app.state.vectorstore, llm, llm_chain)  # 벡터스토어를 함수로 전달
         async with db.begin():
-            if group_id == -1:
+            if chatRequest.group_id == -1:
                 # 새로운 채팅 그룹 생성
                 new_group = ChatGroup()
                 db.add(new_group)
@@ -81,14 +84,14 @@ async def chat(query: str, group_id: int, db: AsyncSession = Depends(get_db)):
                 final_group_id = new_group.group_id
             else:
                 # 기존 채팅 그룹 사용
-                result = await db.execute(select(ChatGroup).where(ChatGroup.group_id == group_id))
+                result = await db.execute(select(ChatGroup).where(ChatGroup.group_id == chatRequest.group_id))
                 existing_group = result.scalar_one_or_none()
                 if existing_group is None:
                     raise HTTPException(status_code=404, detail="존재하지 않는 채팅 그룹입니다.")
                 final_group_id = existing_group.group_id
 
             # 채팅 저장
-            new_chat = Chat(group_id=final_group_id, question=query, answer=answer)
+            new_chat = Chat(group_id=final_group_id, question=chatRequest.query, answer=answer)
             db.add(new_chat)
             await db.commit()
 
