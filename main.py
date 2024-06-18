@@ -41,8 +41,8 @@ llm = ChatOpenAI(
 prompt1 = PromptTemplate(template=template, input_variables=['Query'])
 llm_chain = prompt1 | llm
 
-@app.on_event("eventlistener")
-async def eventlistener():
+@app.on_event("startup")
+async def startup():
     await create_tables()
     await create_vector_store()
 
@@ -57,13 +57,6 @@ async def get_db():
     async with AsyncSessionLocal() as db:
         yield db
 
-@app.get("/db-test")
-async def read_temp(db: AsyncSession = Depends(get_db)):
-    async with db:
-        result = await db.execute(select(Temp))
-        temps = result.scalars().all()
-        return temps
-
 @app.delete('/delete-chat-group')
 async def delete_chat_group():
     return 0
@@ -76,9 +69,29 @@ async def all_chat():
     return 0
 
 @app.post('/chat')
-async def chat(query: str):
+async def chat(query: str, group_id: int, db: AsyncSession = Depends(get_db)):
     try:
         answer = prototype_rag.user_chat(query, app.state.vectorstore, llm, llm_chain)  # 벡터스토어를 함수로 전달
-        return {"answer": answer}
+        async with db.begin():
+            if group_id == -1:
+                # 새로운 채팅 그룹 생성
+                new_group = ChatGroup()
+                db.add(new_group)
+                await db.flush()  # 새로운 그룹의 ID를 얻기 위해 flush 호출
+                final_group_id = new_group.group_id
+            else:
+                # 기존 채팅 그룹 사용
+                result = await db.execute(select(ChatGroup).where(ChatGroup.group_id == group_id))
+                existing_group = result.scalar_one_or_none()
+                if existing_group is None:
+                    raise HTTPException(status_code=404, detail="존재하지 않는 채팅 그룹입니다.")
+                final_group_id = existing_group.group_id
+
+            # 채팅 저장
+            new_chat = Chat(group_id=final_group_id, question=query, answer=answer)
+            db.add(new_chat)
+            await db.commit()
+
+        return {"answer": answer, "group_id": final_group_id}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

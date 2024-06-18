@@ -26,8 +26,9 @@ class ChatGroup(Base):
 
 class Chat(Base):
     __tablename__ = "chat"
+    chat_id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     group_id = Column(Integer, ForeignKey("chatgroup.group_id"), primary_key=True, index=True)
-    question = Column(String(255), primary_key=True, index=True)  # Specified length for String
-    answer = Column(String(255))  # Specified length for String
+    question = Column(String(2048))
+    answer = Column(String(2048))
 
     group = relationship("ChatGroup", back_populates="chats")
