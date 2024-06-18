@@ -1,5 +1,5 @@
 import re
-
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from langchain_core.prompts import PromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import RunnablePassthrough
@@ -50,10 +50,14 @@ def run(query, vectorstore, llm):
             | StrOutputParser()
     )
 
-    SQ_ans = []
-    for key in SQ_keys:
-        SQ_Answer = rag_chain.invoke(data[key])
-        SQ_ans.append(SQ_Answer)
+    def process_key(key):
+        return rag_chain.invoke(data[key])
+
+    with ThreadPoolExecutor() as executor:
+        futures = {executor.submit(process_key, key): key for key in SQ_keys}
+        SQ_ans = []
+        for future in as_completed(futures):
+            SQ_ans.append(future.result())
 
     recomposition_Prompt = (
         "{Input} contains the original questions and the basis for answering them. Please combine them and create an answer.")
