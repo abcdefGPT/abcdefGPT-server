@@ -13,11 +13,12 @@ AsyncSessionLocal = sessionmaker(engine, expire_on_commit=False, class_=AsyncSes
 
 Base = declarative_base()
 
-class Temp(Base):
-    __tablename__ = "temp"
-    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
-
 # 비동기적으로 테이블을 생성하는 함수
 async def create_tables():
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+
+class Temp(Base):
+    __tablename__ = "temp"
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+
