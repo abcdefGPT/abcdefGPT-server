@@ -51,7 +51,7 @@ jobs:
           source: .env
           target: /home/ubuntu/.env
 
-      - name: Deploy to EC2
+      - name: Deploy to EC2 and setup environment
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.EC2_HOST }}
@@ -62,4 +62,7 @@ jobs:
             docker pull ${{ secrets.DOCKERHUB_USERNAME }}/abcdefgpt:latest
             docker stop abcdefgpt || true
             docker rm abcdefgpt || true
-            docker run -d -p 80:80 --name abcdefgpt --env-file /home/ubuntu/.env ${{ secrets.DOCKERHUB_USERNAME }}/abcdefgpt:latest
+            rm -rf /home/ubuntu/.env
+            mkdir -p /home/ubuntu/.env
+            cp /home/ubuntu/.env /home/ubuntu/.env/.env
+            docker run -d -p 80:80 --name abcdefgpt --env-file /home/ubuntu/.env/.env ${{ secrets.DOCKERHUB_USERNAME }}/abcdefgpt:latest
