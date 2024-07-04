@@ -37,6 +37,10 @@ jobs:
           docker tag my-fastapi-app ${{ secrets.DOCKERHUB_USERNAME }}/my-fastapi-app:latest
           docker push ${{ secrets.DOCKERHUB_USERNAME }}/my-fastapi-app:latest
 
+      - name: Create .env file
+        run: |
+          echo "${{ secrets.SECRET_ENV }}" > .env
+
       - name: Copy .env file to EC2
         uses: appleboy/scp-action@master
         with:
@@ -58,4 +62,4 @@ jobs:
             docker pull ${{ secrets.DOCKERHUB_USERNAME }}/my-fastapi-app:latest
             docker stop my-fastapi-app || true
             docker rm my-fastapi-app || true
-            docker run -d -p 80:80 --name my-fastapi-app --env-file .env ${{ secrets.DOCKERHUB_USERNAME }}/my-fastapi-app:latest
+            docker run -d -p 80:80 --name my-fastapi-app --env-file /home/ubuntu/.env ${{ secrets.DOCKERHUB_USERNAME }}/my-fastapi-app:latest
