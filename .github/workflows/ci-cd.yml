@@ -1,0 +1,56 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.12.2'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Lint with flake8
+        run: |
+          pip install flake8
+          flake8 .
+
+      - name: Build Docker image
+        run: docker build -t my-fastapi-app .
+
+      - name: Log in to Docker Hub
+        run: echo "${{ secrets.DOCKERHUB_PASSWORD }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
+
+      - name: Push Docker image
+        run: |
+          docker tag my-fastapi-app ${{ secrets.DOCKERHUB_USERNAME }}/my-fastapi-app:latest
+          docker push ${{ secrets.DOCKERHUB_USERNAME }}/my-fastapi-app:latest
+
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ec2-user
+          key: ${{ secrets.EC2_SSH_KEY }}
+          port: 22
+          script: |
+            docker pull ${{ secrets.DOCKERHUB_USERNAME }}/my-fastapi-app:latest
+            docker stop my-fastapi-app || true
+            docker rm my-fastapi-app || true
+            docker run -d -p 80:80 --name my-fastapi-app --env-file .env ${{ secrets.DOCKERHUB_USERNAME }}/my-fastapi-app:latest
