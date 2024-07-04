@@ -7,3 +7,4 @@ langchain_community
 langchain_openai
 openai
 python-dotenv
+faiss-gpu
