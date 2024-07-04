@@ -62,6 +62,6 @@ jobs:
             docker pull ${{ secrets.DOCKERHUB_USERNAME }}/abcdefgpt:latest
             docker stop abcdefgpt || true
             docker rm abcdefgpt || true
-            docker run -d -p 80:80 --name abcdefgpt ${{ secrets.DOCKERHUB_USERNAME }}/abcdefgpt:latest
+            docker create --name abcdefgpt ${{ secrets.DOCKERHUB_USERNAME }}/abcdefgpt:latest
             docker cp /home/ubuntu/.env abcdefgpt:/app/.env
-            docker restart abcdefgpt
+            docker start abcdefgpt
