@@ -62,7 +62,6 @@ jobs:
             docker pull ${{ secrets.DOCKERHUB_USERNAME }}/abcdefgpt:latest
             docker stop abcdefgpt || true
             docker rm abcdefgpt || true
-            rm -rf /home/ubuntu/.env
-            mkdir -p /home/ubuntu/.env
-            cp /home/ubuntu/.env /home/ubuntu/.env/.env
-            docker run -d -p 80:80 --name abcdefgpt --env-file /home/ubuntu/.env/.env ${{ secrets.DOCKERHUB_USERNAME }}/abcdefgpt:latest
+            docker run -d -p 80:80 --name abcdefgpt ${{ secrets.DOCKERHUB_USERNAME }}/abcdefgpt:latest
+            docker cp /home/ubuntu/.env abcdefgpt:/app/.env
+            docker restart abcdefgpt
