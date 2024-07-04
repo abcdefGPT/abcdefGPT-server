@@ -63,5 +63,5 @@ jobs:
             docker stop abcdefgpt || true
             docker rm abcdefgpt || true
             docker create --name abcdefgpt ${{ secrets.DOCKERHUB_USERNAME }}/abcdefgpt:latest
-            docker cp /home/ubuntu/.env abcdefgpt:/app/.env
+            docker cp /home/ubuntu/.env/.env abcdefgpt:/app/.env
             docker start abcdefgpt
