@@ -10,8 +10,6 @@ from langchain_community.document_loaders import DirectoryLoader, TextLoader
 import os
 import openai
 from dotenv import load_dotenv
-import asyncio
-import sys
 
 from dto import ChatRequest
 
@@ -20,7 +18,7 @@ if __name__ == "__main__":
     import uvicorn
 
     asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
-    uvicorn.run("main:app", host="0.0.0.0", port=80, reload=True)
+    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
 
 load_dotenv()
 
