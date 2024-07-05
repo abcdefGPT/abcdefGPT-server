@@ -20,7 +20,7 @@ if __name__ == "__main__":
     import uvicorn
 
     asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
-    uvicorn.run("main:app", host="127.0.0.1", port=5000, reload=True)
+    uvicorn.run("main:app", host="0.0.0.0", port=80, reload=True)
 
 load_dotenv()
 
