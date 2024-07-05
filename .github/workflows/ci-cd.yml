@@ -41,17 +41,17 @@ jobs:
         run: |
           echo "${{ secrets.SECRET_ENV }}" > .env
 
-      - name: List files for debugging
-        run: ls -alh
-
-      - name: Copy all project files to EC2
+      - name: Copy files to EC2
         uses: appleboy/scp-action@master
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
           port: 22
-          source: .
+          source: |
+            requirements.txt
+            docker-compose.yml
+            Dockerfile
           target: /home/ubuntu/abcdefgpt/
 
       - name: Deploy to EC2 and setup environment
