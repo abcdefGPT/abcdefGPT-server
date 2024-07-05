@@ -49,9 +49,9 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           port: 22
           source: |
-            requirements.txt
-            docker-compose.yml
-            Dockerfile
+            ./requirements.txt
+            ./docker-compose.yml
+            ./Dockerfile
           target: /home/ubuntu/abcdefgpt/
 
       - name: Deploy to EC2 and setup environment
