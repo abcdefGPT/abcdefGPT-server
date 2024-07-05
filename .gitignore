@@ -1,2 +1,4 @@
 # config
 .env
+# sLM
+Meta-Llama-3-8B-Instruct.Q8_0.gguf
