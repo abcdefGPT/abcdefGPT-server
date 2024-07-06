@@ -47,9 +47,17 @@ async def all_chat_group(db: AsyncSession = Depends(get_db)):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+# 특정 채팅 그룹의 모든 질문과 답변 반환
 @app.get('/all-chat')
-async def all_chat():
-    return 0
+async def all_chat(group_id: int, db: AsyncSession = Depends(get_db)):
+    try:
+        async with db.begin():
+            result = await db.execute(select(Chat).where(Chat.group_id == group_id))
+            chats = result.scalars().all()
+
+        return chats
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.post('/chat')
 async def chat(chatRequest: ChatRequest, db: AsyncSession = Depends(get_db)):
