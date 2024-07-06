@@ -6,11 +6,19 @@ import rag
 from dto import ChatRequest
 # Import the LLM configuration from the separate file
 from llm.llm_config import llm, llm_chain, create_vector_store
-import logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+from pydantic import BaseModel
+from typing import List
 
 app = FastAPI()
+
+class ChatGroupModel(BaseModel):
+    group_id: int
+
+class ChatModel(BaseModel):
+    id: int
+    group_id: int
+    question: str
+    answer: str
 
 @app.on_event("startup")
 async def startup():
@@ -26,54 +34,40 @@ async def get_db():
 async def delete_chat_group(group_id: int, db: AsyncSession = Depends(get_db)):
     try:
         async with db.begin():
-            logger.info(f"Attempting to delete chat group with group_id: {group_id}")
             result = await db.execute(select(ChatGroup).where(ChatGroup.group_id == group_id))
             chat_group = result.scalar_one_or_none()
             if chat_group is None:
-                logger.warning(f"Chat group with group_id: {group_id} does not exist.")
                 raise HTTPException(status_code=404, detail="존재하지 않는 채팅 그룹입니다.")
 
             await db.delete(chat_group)
             await db.commit()
-            logger.info(f"Chat group with group_id: {group_id} has been deleted.")
 
         return {"detail": "채팅 그룹이 삭제되었습니다."}
     except Exception as e:
-        logger.error(f"Error deleting chat group with group_id: {group_id} - {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
 # 모든 채팅 그룹 반환
-@app.get('/all-chat-group')
+@app.get('/all-chat-group', response_model=List[ChatGroupModel])
 async def all_chat_group(db: AsyncSession = Depends(get_db)):
     try:
         async with db.begin():
             result = await db.execute(select(ChatGroup))
             chat_groups = result.scalars().all()
-            logger.info(f"Fetched chat groups: {chat_groups}")
 
-        if not chat_groups:
-            return {"detail": "No chat groups found"}
         return chat_groups
     except Exception as e:
-        logger.error(f"Error fetching chat groups: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
-
-@app.get('/all-chat')
+# 특정 채팅 그룹의 모든 질문과 답변 반환
+@app.get('/all-chat', response_model=List[ChatModel])
 async def all_chat(group_id: int, db: AsyncSession = Depends(get_db)):
     try:
         async with db.begin():
-            logger.info(f"Fetching all chats for group_id: {group_id}")
             result = await db.execute(select(Chat).where(Chat.group_id == group_id))
             chats = result.scalars().all()
-            logger.info(f"Fetched chats: {chats}")
 
-        if not chats:
-            logger.warning(f"No chats found for group_id: {group_id}")
-            return {"detail": f"No chats found for group_id: {group_id}"}
         return chats
     except Exception as e:
-        logger.error(f"Error fetching chats for group_id: {group_id} - {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post('/chat')
