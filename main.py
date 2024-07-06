@@ -18,9 +18,22 @@ async def get_db():
     async with AsyncSessionLocal() as db:
         yield db
 
+# 특정 채팅 그룹 삭제
 @app.delete('/delete-chat-group')
-async def delete_chat_group():
-    return 0
+async def delete_chat_group(group_id: int, db: AsyncSession = Depends(get_db)):
+    try:
+        async with db.begin():
+            result = await db.execute(select(ChatGroup).where(ChatGroup.group_id == group_id))
+            chat_group = result.scalar_one_or_none()
+            if chat_group is None:
+                raise HTTPException(status_code=404, detail="존재하지 않는 채팅 그룹입니다.")
+
+            await db.delete(chat_group)
+            await db.commit()
+
+        return {"detail": "채팅 그룹이 삭제되었습니다."}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.get('/all-chat-group')
 async def all_chat_group():

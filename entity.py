@@ -22,7 +22,7 @@ class ChatGroup(Base):
     __tablename__ = "chatgroup"
     group_id = Column(Integer, primary_key=True, index=True, autoincrement=True)
 
-    chats = relationship("Chat", back_populates="group")
+    chats = relationship("Chat", back_populates="group", cascade="all, delete-orphan")
 
 class Chat(Base):
     __tablename__ = "chat"
