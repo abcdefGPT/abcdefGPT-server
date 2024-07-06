@@ -18,7 +18,7 @@ async def get_db():
     async with AsyncSessionLocal() as db:
         yield db
 
-# 특정 채팅 그룹 삭제
+# 채팅 그룹 삭제
 @app.delete('/delete-chat-group')
 async def delete_chat_group(group_id: int, db: AsyncSession = Depends(get_db)):
     try:
@@ -35,9 +35,17 @@ async def delete_chat_group(group_id: int, db: AsyncSession = Depends(get_db)):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+# 모든 채팅 그룹 반환
 @app.get('/all-chat-group')
-async def all_chat_group():
-    return 0
+async def all_chat_group(db: AsyncSession = Depends(get_db)):
+    try:
+        async with db.begin():
+            result = await db.execute(select(ChatGroup))
+            chat_groups = result.scalars().all()
+
+        return chat_groups
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.get('/all-chat')
 async def all_chat():
