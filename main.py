@@ -6,15 +6,8 @@ import rag
 from dto import ChatRequest
 # Import the LLM configuration from the separate file
 from llm.llm_config import llm, llm_chain, create_vector_store
-import logging
-
-
 
 app = FastAPI()
-
-# 로그 설정
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
 
 @app.on_event("startup")
 async def startup():
@@ -26,7 +19,7 @@ async def get_db():
         yield db
 
 # 채팅 그룹 삭제
-@app.post('/delete-chat-group')
+@app.delete('/delete-chat-group')
 async def delete_chat_group(group_id: int, db: AsyncSession = Depends(get_db)):
     try:
         async with db.begin():
@@ -43,23 +36,20 @@ async def delete_chat_group(group_id: int, db: AsyncSession = Depends(get_db)):
         raise HTTPException(status_code=500, detail=str(e))
 
 # 모든 채팅 그룹 반환
-@app.post('/all-chat-group')
+@app.get('/all-chat-group')
 async def all_chat_group(db: AsyncSession = Depends(get_db)):
-    logger.info(f"all-chat-group")
 
     try:
         async with db.begin():
             result = await db.execute(select(ChatGroup))
             chat_groups = result.scalars().all()
 
-            logger.info(f"Chat groups retrieved: {chat_groups}")
-
         return chat_groups
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 # 특정 채팅 그룹의 모든 질문과 답변 반환
-@app.post('/all-chat')
+@app.get('/all-chat')
 async def all_chat(group_id: int, db: AsyncSession = Depends(get_db)):
     try:
         async with db.begin():
