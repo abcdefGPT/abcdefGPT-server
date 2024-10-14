@@ -80,12 +80,6 @@ async def chat(chatRequest: ChatRequest, db: AsyncSession = Depends(get_db)):
         contexts = []
         query_and_contexts = []
 
-        # with ThreadPoolExecutor() as executor:
-        #     futures = {executor.submit(process_key, key): key for key in SQ_keys}
-        #     SQ_ans = []
-        #     for future in as_completed(futures):
-        #         SQ_ans.append(future.result())
-
         for queries in decom_question:
             temp_contexts = []
             for query in queries:

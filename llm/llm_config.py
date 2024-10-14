@@ -1,26 +1,12 @@
-from langchain_openai import ChatOpenAI, OpenAIEmbeddings
-from langchain_core.prompts import PromptTemplate
-from langchain_community.vectorstores import FAISS
-from langchain_community.document_loaders import DirectoryLoader, TextLoader
 import openai
-# Load environment variables
-from dotenv import load_dotenv
 from langchain.vectorstores import FAISS
 from langchain.embeddings import OpenAIEmbeddings
 from langchain.prompts import ChatPromptTemplate
 from langchain.schema.runnable import RunnablePassthrough
 from langchain.schema.output_parser import StrOutputParser
 from langchain.chat_models import ChatOpenAI
-from langchain.llms import Anthropic
-from datasets import Dataset
-from datasets import load_dataset
 import os
 from groq import Groq
-import time
-from tqdm import tqdm
-import networkx as nx
-import pprint
-import re
 import networkx as nx
 
 # file_path = os.getcwd() + "llm/vector_store/hotpotqa_test_compressed_vectorstore_ver2.index"
