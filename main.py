@@ -5,14 +5,14 @@ from entity import AsyncSessionLocal, ChatGroup, Chat, create_tables
 import rag
 from dto import ChatRequest
 # Import the LLM configuration from the separate file
-from llm.llm_config import llm, llm_chain, create_vector_store
+from llm.llm_config import get_entities, get_re, convert_core, convert_rener, query_decomposition, get_core, retriever, rag_chain
 
 app = FastAPI()
 
 @app.on_event("startup")
 async def startup():
     await create_tables()
-    await create_vector_store(app)
+    # await create_vector_store(app)
 
 async def get_db():
     async with AsyncSessionLocal() as db:
@@ -63,7 +63,41 @@ async def all_chat(group_id: int, db: AsyncSession = Depends(get_db)):
 @app.post('/chat')
 async def chat(chatRequest: ChatRequest, db: AsyncSession = Depends(get_db)):
     try:
-        answer = rag.user_chat(chatRequest.query, app.state.vectorstore, llm, llm_chain)  # 벡터스토어를 함수로 전달
+        query = chatRequest.query
+
+        decom_question = []
+
+        entities = get_entities(query)
+        relations = get_re(entities, query)
+        rener_json = convert_rener(entities, relations)
+        core = get_core(entities, relations, query)
+        cores_json = convert_core(core)
+
+        decom_query = query_decomposition(rener_json, cores_json)
+        decom_question.extend([decom_query])
+
+        answers = []
+        contexts = []
+        query_and_contexts = []
+
+        # with ThreadPoolExecutor() as executor:
+        #     futures = {executor.submit(process_key, key): key for key in SQ_keys}
+        #     SQ_ans = []
+        #     for future in as_completed(futures):
+        #         SQ_ans.append(future.result())
+
+        for queries in decom_question:
+            temp_contexts = []
+            for query in queries:
+                t_c = []
+                for docs in retriever.get_relevant_documents(query):
+                    t_c.append(docs.page_content)
+                    temp_contexts.append(docs.page_content)
+                query_and_contexts.append({'query': query, 'document': t_c})
+            contexts.append(temp_contexts)
+            answers.append(rag_chain.invoke({"context": temp_contexts, "question": query}))
+
+        # answer = rag.user_chat(chatRequest.query, app.state.vectorstore, llm, llm_chain)  # 벡터스토어를 함수로 전달
         async with db.begin():
             if chatRequest.group_id == -1:
                 # 새로운 채팅 그룹 생성
@@ -80,11 +114,11 @@ async def chat(chatRequest: ChatRequest, db: AsyncSession = Depends(get_db)):
                 final_group_id = existing_group.group_id
 
             # 채팅 저장
-            new_chat = Chat(group_id=final_group_id, question=chatRequest.query, answer=answer)
+            new_chat = Chat(group_id=final_group_id, question=chatRequest.query, answer=answers[0])
             db.add(new_chat)
             await db.commit()
 
-        return {"answer": answer, "group_id": final_group_id}
+        return {"answer": answers, "group_id": final_group_id}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
