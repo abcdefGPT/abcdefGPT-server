@@ -5,9 +5,18 @@ from entity import AsyncSessionLocal, ChatGroup, Chat, create_tables
 import rag
 from dto import ChatRequest
 # Import the LLM configuration from the separate file
-from llm.llm_config import get_entities, get_re, convert_core, convert_rener, query_decomposition, get_core, retriever, rag_chain
+from llm.llm_config import get_entities, get_re, convert_rener, query_decomposition, retriever, rag_chain
+from langchain.retrievers import ContextualCompressionRetriever
+from langchain.retrievers.document_compressors import CrossEncoderReranker
+from langchain_community.cross_encoders import HuggingFaceCrossEncoder
 
 app = FastAPI()
+
+model = HuggingFaceCrossEncoder(model_name = "BAAI/bge-reranker-v2-m3")
+compressor = CrossEncoderReranker(model=model, top_n=1)
+compression_retriever = ContextualCompressionRetriever(
+    base_compressor=compressor, base_retriever=retriever
+)
 
 @app.on_event("startup")
 async def startup():
@@ -70,10 +79,8 @@ async def chat(chatRequest: ChatRequest, db: AsyncSession = Depends(get_db)):
         entities = get_entities(query)
         relations = get_re(entities, query)
         rener_json = convert_rener(entities, relations)
-        core = get_core(entities, relations, query)
-        cores_json = convert_core(core)
 
-        decom_query = query_decomposition(rener_json, cores_json)
+        decom_query = query_decomposition(rener_json)
         decom_question.extend([decom_query])
 
         answers = []

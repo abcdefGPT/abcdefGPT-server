@@ -8,7 +8,7 @@ from langchain.chat_models import ChatOpenAI
 import os
 from groq import Groq
 import networkx as nx
-from llm.llm_prompt import template, NER_prompt, RE_prompt, system_message, graph_to_text
+from llm.llm_prompt import template, NER_prompt, RE_prompt, graph_to_text, relation_extraction_prompt
 
 file_path = 'llm/vector_store/hotpotqa_test_compressed_vectorstore_ver2.index/'
 
@@ -55,7 +55,8 @@ def get_entities(query):
   }]
   response = openai.chat.completions.create(
     model=model,
-    messages=messages
+    messages=messages,
+    temperature=0
   )
 
   return response.choices[0].message.content
@@ -72,44 +73,27 @@ def get_re(words, query):
   }]
   response = openai.chat.completions.create(
     model=model,
-    messages=messages
+    messages=messages,
+    temperature=0
   )
 
-  return response.choices[0].message.content
+  relations = response.choices[0].message.content
 
-# core 뽑기
-def get_core(words, relations, query):
-  all = "Query: " + query + "\nEntity: " + words + "\n" + relations
+  all = "Sentense: " + query + "\nEntity pairs:\n" + relations
   messages = [{
       "role": "system",
-      "content": system_message
+      "content": relation_extraction_prompt
   }, {
       "role": "user",
       "content": all
   }]
   response = openai.chat.completions.create(
     model=model,
-    messages=messages
+    messages=messages,
+    temperature=0
   )
 
   return response.choices[0].message.content
-
-def convert_core(q1_before):
-    # 각 항목을 분리하여 리스트로 변환
-    components = [comp.strip() for comp in q1_before.split(',')]
-
-    # 엔티티와 속성 파싱
-    entities = []
-    for comp in components:
-        if '(' in comp and ')' in comp:
-            entity, attribute = comp.split('(')
-            attribute = attribute.strip(')').strip()
-        else:
-            entity = comp.strip()
-            attribute = 'core'  # 기본 속성으로 설정
-        entities.append({'entity': entity.strip(), 'attribute': attribute})
-
-    return entities
 
 def convert_rener(entities, relations):
     # 엔티티 추출
@@ -152,7 +136,7 @@ def process_data(prompt):
     )
     return chat_completion.choices[0].message.content
 
-def query_decomposition(rener_json, cores_json):
+def query_decomposition(rener_json):
   decomposed_queries = []
 
   G = nx.DiGraph()
@@ -160,19 +144,6 @@ def query_decomposition(rener_json, cores_json):
   # G에 entity를 node로 추가
   for nodes in rener_json['entities']:
     G.add_node(nodes)
-
-  for nodes_with_attribute in cores_json:
-    entity = nodes_with_attribute['entity']
-    attribute = nodes_with_attribute['attribute']
-
-    # G에 노드로 존재하는 경우에만 아래 코드 수행, 단 추가가 아니라 type과 color만 변경
-    if G.has_node(entity):
-        if attribute == "core":
-            G.add_node(entity, type=attribute, color="#FF0081")  # 핑크색
-        elif attribute == "etc":
-            G.add_node(entity, type=attribute, color="#5858FA")  # 파란색
-    else:
-        G.add_node(entity, type="etc", color="#005DEA")  # 그 외 파란색
 
   # rener_json 데이터에서 relations를 edge로 추가
   for edge in rener_json['relations']:
@@ -290,7 +261,6 @@ def query_decomposition(rener_json, cores_json):
                     if relation not in relation_groups:
                         relation_groups[relation] = []
                     relation_groups[relation].append(in_edge)
-                # print(relation_groups) #test
 
                 # 동일한 relation을 가진 엣지들로 서브그래프 생성
                 for relation, edges in relation_groups.items():
@@ -362,6 +332,7 @@ def query_decomposition(rener_json, cores_json):
                                     nodes_to_explore_D.append(predecessor)
 
                       will_decom_graph.append(subgraph)
+
 
                     split_by_incoming = True
                     break
