@@ -11,4 +11,3 @@ faiss-cpu
 langchainhub
 groq
 networkx
-sentence_transformers
