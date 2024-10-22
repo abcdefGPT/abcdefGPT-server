@@ -1,9 +1,9 @@
 from sqlalchemy.future import select
 from fastapi import FastAPI, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
-from entity import AsyncSessionLocal, ChatGroup, Chat, create_tables
+from db.entity import AsyncSessionLocal, ChatGroup, Chat, create_tables
 import rag
-from dto import ChatRequest
+from db.dto import ChatRequest
 # Import the LLM configuration from the separate file
 from llm.llm_config import llm, llm_chain, create_vector_store
 

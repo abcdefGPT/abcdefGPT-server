@@ -39,8 +39,12 @@ prompt1 = PromptTemplate(template=template, input_variables=['Query'])
 llm_chain = prompt1 | llm
 
 async def create_vector_store(app):
-    loader = DirectoryLoader('rule/public_institution_rule_english', glob="*.json", show_progress=True,
-                             loader_cls=TextLoader)
+    loader = DirectoryLoader(
+        'rule/public_institution_rule_english',
+        glob="*.json",
+        show_progress=True,
+        loader_cls=lambda x: TextLoader(x, encoding='utf-8')
+    )
     docs = loader.load()
     vectorstore = FAISS.from_documents(documents=docs, embedding=OpenAIEmbeddings(api_key=openai.api_key))
     app.state.vectorstore = vectorstore
